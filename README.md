@@ -1,4 +1,4 @@
-# Audiogen Codec (agc) (coming soon...)
+# Audiogen Codec (agc)
 
 We are announcing the open source release of Audiogen Codec (agc) 🎉. A low compression 48khz stereo neural audio codec for general audio, optimizing for audio fidelity 🎵.
 
@@ -35,3 +35,11 @@ z = agc.encode(audio) # (1, 32, 6000) or (1, 24, 3000)
 
 reconstructed_audio = agc.decode(z) # (1, 2, 480000)
 ```
+
+# Misc
+
+Example colab: https://colab.research.google.com/drive/1MXeBYMY-dZ3Yas-5rXzggMONIlDDQ5VG#scrollTo=9mtfSc-r4dkn (credit: Christoph from LAION)
+
+# Examples
+
+https://audiogen.notion.site/Audiogen-Codec-Examples-546fe64596f54e20be61deae1c674f20
