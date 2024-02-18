@@ -1,4 +1,4 @@
-# Audiogen Codec (agc) (coming soon...)
+# Audiogen Codec (agc)
 
 We are announcing the open source release of Audiogen Codec (agc) 🎉. A low compression 48khz stereo neural audio codec for general audio, optimizing for audio fidelity 🎵.
 
