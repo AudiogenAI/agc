@@ -430,7 +430,7 @@ class AGC(PreTrainedModel):
 
         if self.config.vae:
             mean, scale = raw_latent.chunk(2, dim=1)
-            raw_latent = vae_sample(mean, scale)[0]
+            raw_latent = vae_sample(mean, scale)[0] if self.training else mean
 
         if not self.continuous:
             z = self.quantizer.forward(raw_latent)[0]
