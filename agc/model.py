@@ -1,5 +1,5 @@
 import torch
-from torch import nn, Tensor, FloatTensor, LongTensor
+from torch import nn, Tensor
 from torch.nn.utils.parametrizations import weight_norm
 import torch.nn.functional as F
 import math
@@ -43,10 +43,10 @@ class VectorQuantize(nn.Module):
 
         return z_q, commitment_loss, codebook_loss, indices, z_e
 
-    def embed_code(self, embed_id: LongTensor):
+    def embed_code(self, embed_id: Tensor):
         return F.embedding(embed_id, self.codebook.weight)
 
-    def decode_code(self, embed_id: LongTensor):
+    def decode_code(self, embed_id: Tensor):
         return self.embed_code(embed_id).transpose(1, 2)
 
     def decode_latents(self, latents: Tensor):
@@ -440,7 +440,7 @@ class AGC(PreTrainedModel):
 
         return z
 
-    def decode(self, z: FloatTensor | LongTensor) -> Tensor:
+    def decode(self, z: Tensor) -> Tensor:
         """Decode quantized codes and return audio data"""
 
         if not self.continuous:
