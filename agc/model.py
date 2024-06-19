@@ -1,12 +1,11 @@
 import torch
-from torch import nn, Tensor
+from torch import nn
 from torch.nn.utils.parametrizations import weight_norm
 import torch.nn.functional as F
 import math
 from einops import rearrange
 import numpy as np
-
-from transformers import PretrainedConfig, PreTrainedModel
+import transformers
 
 
 def WNConv1d(*args, **kwargs):
@@ -27,7 +26,7 @@ class VectorQuantize(nn.Module):
         self.out_proj = WNConv1d(codebook_dim, input_dim, kernel_size=1)
         self.codebook = nn.Embedding(codebook_size, codebook_dim)
 
-    def forward(self, z: Tensor):
+    def forward(self, z: torch.Tensor):
         # Factorized codes (ViT-VQGAN) Project input into low-dimensional space
         z_e = self.in_proj.forward(z)  # z_e : (B x D x T)
         z_q, indices = self.decode_latents(z_e)
@@ -43,13 +42,13 @@ class VectorQuantize(nn.Module):
 
         return z_q, commitment_loss, codebook_loss, indices, z_e
 
-    def embed_code(self, embed_id: Tensor):
+    def embed_code(self, embed_id: torch.Tensor):
         return F.embedding(embed_id, self.codebook.weight)
 
-    def decode_code(self, embed_id: Tensor):
+    def decode_code(self, embed_id: torch.Tensor):
         return self.embed_code(embed_id).transpose(1, 2)
 
-    def decode_latents(self, latents: Tensor):
+    def decode_latents(self, latents: torch.Tensor):
         encodings = rearrange(latents, "b d t -> (b t) d")
         codebook = self.codebook.weight  # codebook: (N x D)
 
@@ -93,8 +92,8 @@ class ResidualVectorQuantize(nn.Module):
         )
         self.quantizer_dropout = quantizer_dropout
 
-    def forward(self, z: Tensor, num_quantizers: int = None):
-        """Quantized the input tensor using a fixed set of `n` codebooks and returns
+    def forward(self, z: torch.Tensor, num_quantizers: int = None):
+        """Quantized the input torch.Tensor using a fixed set of `n` codebooks and returns
         the corresponding codebook vectors"""
         latent = 0
         residual = z
@@ -139,7 +138,7 @@ class ResidualVectorQuantize(nn.Module):
 
         return z, latent, commitment_loss, codebook_loss
 
-    def from_indices(self, z: Tensor):
+    def from_indices(self, z: torch.Tensor):
         z_q = 0.0
         z_p = []
         n_codebooks = z.shape[1]
@@ -152,7 +151,7 @@ class ResidualVectorQuantize(nn.Module):
         return z_q
 
 
-def vae_sample(mean: Tensor, scale: Tensor):
+def vae_sample(mean: torch.Tensor, scale: torch.Tensor):
     stdev = nn.functional.softplus(scale) + 1e-4
     var = stdev * stdev
     logvar = torch.log(var)
@@ -165,7 +164,7 @@ def vae_sample(mean: Tensor, scale: Tensor):
 
 # Scripting this brings model speed up 1.4x
 @torch.jit.script
-def snake(x: Tensor, alpha: Tensor):
+def snake(x: torch.Tensor, alpha: torch.Tensor):
     shape = x.shape
     x = x.reshape(shape[0], shape[1], -1)
     x = x + (alpha + 1e-9).reciprocal() * torch.sin(alpha * x).pow(2)
@@ -227,7 +226,7 @@ class EncoderBlock(nn.Module):
             ),
         )
 
-    def forward(self, x: Tensor):
+    def forward(self, x: torch.Tensor):
         return self.block.forward(x)
 
 
@@ -257,7 +256,7 @@ class Encoder(nn.Module):
         self.block = nn.Sequential(*self.block)
         self.enc_dim = d_model
 
-    def forward(self, x: Tensor):
+    def forward(self, x: torch.Tensor):
         return self.block.forward(x)
 
 
@@ -279,7 +278,7 @@ class DecoderBlock(nn.Module):
             ResidualUnit(output_dim, dilation=9),
         )
 
-    def forward(self, x: Tensor):
+    def forward(self, x: torch.Tensor):
         return self.block.forward(x)
 
 
@@ -311,11 +310,11 @@ class Decoder(nn.Module):
 
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: torch.Tensor):
         return self.model.forward(x)
 
 
-class AGCConfig(PretrainedConfig):
+class AGCConfig(transformers.PretrainedConfig):
     model_type = "agc"
 
     def __init__(
@@ -353,7 +352,7 @@ class AGCConfig(PretrainedConfig):
         super().__init__(**kwargs)
 
 
-class AGC(PreTrainedModel):
+class AGC(transformers.PreTrainedModel):
     config_class = AGCConfig
 
     def __init__(
@@ -410,7 +409,7 @@ class AGC(PreTrainedModel):
 
         self.latent_std = 4.7
 
-    def preprocess(self, audio: Tensor, sample_rate: int):
+    def preprocess(self, audio: torch.Tensor, sample_rate: int):
         if sample_rate is None:
             sample_rate = self.sample_rate
         assert sample_rate == self.sample_rate
@@ -422,7 +421,7 @@ class AGC(PreTrainedModel):
 
         return audio
 
-    def encode(self, audio: Tensor):
+    def encode(self, audio: torch.Tensor):
         """Encode given audio data and return quantized latent codes"""
 
         audio = self.preprocess(audio, self.sample_rate)
@@ -440,7 +439,7 @@ class AGC(PreTrainedModel):
 
         return z
 
-    def decode(self, z: Tensor) -> Tensor:
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
         """Decode quantized codes and return audio data"""
 
         if not self.continuous:
