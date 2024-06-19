@@ -10,6 +10,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/AudiogenAI/agc",
     packages=find_packages(),
+    package_data={"agc": ["py.typed"]},
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "License :: Other/Proprietary License",
