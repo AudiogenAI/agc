@@ -272,6 +272,7 @@ class DecoderBlock(nn.Module):
                 kernel_size=2 * stride,
                 stride=stride,
                 padding=math.ceil(stride / 2),
+                output_padding=0 if stride % 2 == 0 else 1
             ),
             ResidualUnit(output_dim, dilation=1),
             ResidualUnit(output_dim, dilation=3),
