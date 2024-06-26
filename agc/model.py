@@ -140,12 +140,9 @@ class ResidualVectorQuantize(nn.Module):
 
     def from_indices(self, z: torch.Tensor):
         z_q = 0.0
-        z_p = []
         n_codebooks = z.shape[1]
         for i in range(n_codebooks):
             z_p_i = self.quantizers[i].decode_code(z[:, i, :])
-            z_p.append(z_p_i)
-
             z_q_i = self.quantizers[i].out_proj(z_p_i)
             z_q = z_q + z_q_i
         return z_q
