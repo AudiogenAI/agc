@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="audiogen-agc",
-    version="0.0.1",
+    version="0.1.1",
     author="Elio Pascarelli",
     author_email="elio@audiogen.co",
     description="Audiogen Codec",
